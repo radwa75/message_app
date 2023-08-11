@@ -1,0 +1,204 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+
+final _firestore = FirebaseFirestore.instance;
+late User signedINUser;
+
+class ChatScreen extends StatefulWidget {
+  static const String screenRoute = 'chat_screen';
+  const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final messageTextController = TextEditingController();
+  final _firestore = FirebaseFirestore.instance;
+  final _auth = FirebaseAuth.instance;
+
+  String? messageText;
+
+  @override
+  void initState() {
+    super.initState();
+    currentuser();
+  }
+
+  void currentuser() {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        signedINUser = user;
+        print(signedINUser.email);
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  /* void getmessages() async {
+    final messages= await _firestore.collection('messages').get();
+    for (var message in messages.docs) {
+      print(message.data());
+    }
+  }*/
+  void messagesStreams() async {
+    await for (var snapshot in _firestore.collection('chat').snapshots()) {
+      for (var message in snapshot.docs) {
+        print(message.data());
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color.fromARGB(255, 241, 130, 167),
+        title: Row(children: [
+          Image.asset(
+            'images/chat.png',
+            height: 30,
+          ),
+          SizedBox(
+            width: 10,
+          ),
+          Text(
+            'chat ',
+            style: TextStyle(
+                fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+          )
+        ]),
+        actions: [
+          IconButton(
+            onPressed: () {
+              messagesStreams();
+              //_auth.signOut();
+              // Navigator.pop(context);
+            },
+            icon: Icon(Icons.download),
+          )
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            messagestreambuilder(),
+            Container(
+              decoration: BoxDecoration(
+                  border: Border(
+                      top: BorderSide(
+                          color: Color.fromARGB(255, 241, 130, 167),
+                          width: 2))),
+              child:
+                  Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Expanded(
+                    child: TextField(
+                  controller: messageTextController,
+                  onChanged: (value) {
+                    messageText = value;
+                  },
+                  decoration: InputDecoration(
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                    hintText: 'write your message here.....',
+                    border: InputBorder.none,
+                  ),
+                )),
+                TextButton(
+                    onPressed: () {
+                      messageTextController.clear();
+                      _firestore.collection('chat').add(
+                          {'text': messageText, 'sender': signedINUser.email});
+                    },
+                    child: Text(
+                      'send',
+                      style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 241, 130, 167)),
+                    ))
+              ]),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class messagestreambuilder extends StatelessWidget {
+  const messagestreambuilder({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+        stream: _firestore.collection('chat').snapshots(),
+        builder: (context, snapshot) {
+          List<messageline> messageWidgets = [];
+
+          if (!snapshot.hasData) {
+            return Center(
+                child: CircularProgressIndicator(
+                    backgroundColor: Colors.pink[900]));
+          }
+
+          final messages = snapshot.data!.docs;
+          for (var message in messages) {
+            final messageText = message.get('text');
+            final messageSender = message.get('sender');
+            
+            final newuser = signedINUser.email;
+            final messageWeidget =
+                messageline(sender: messageSender, text: messageText,isme: newuser == messageSender);
+            if (newuser == messageSender)
+              messageWidgets.add(messageWeidget);
+          }
+          return Expanded(
+            child: ListView(
+                padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                children: messageWidgets),
+          );
+        });
+  }
+}
+
+class messageline extends StatelessWidget {
+  const messageline({this.text, this.sender, super.key,required this.isme});
+  final String? text;
+  final String? sender;
+  final bool isme;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Column(
+          crossAxisAlignment: isme ?CrossAxisAlignment.end:CrossAxisAlignment.start,
+          children: [
+            Text('$sender',
+                style: TextStyle(
+                    fontSize: 9,
+                    color: const Color.fromARGB(255, 128, 109, 115))),
+            Material(
+              elevation: 4,
+              borderRadius: isme? BorderRadius.only(
+                  topLeft: Radius.circular(40),
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40)): BorderRadius.only(topRight: Radius.circular(40),
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40)),
+              color:isme  ? Color.fromARGB(148, 238, 42, 111):Color.fromARGB(255, 184, 102, 147),
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                child: Text('$text',
+                    style: TextStyle(fontSize: 10, color: Color.fromARGB(255, 255, 250, 253))),
+              ),
+            ),
+          ],
+        ));
+  }
+}

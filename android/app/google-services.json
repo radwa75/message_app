@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "822789582232",
+    "project_id": "chatapp-fcec5",
+    "storage_bucket": "chatapp-fcec5.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:822789582232:android:056bf785ffcf496cafcfed",
+        "android_client_info": {
+          "package_name": "com.example.beauty"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "822789582232-jq0es7ofufip31gjt697tehlskj8iudj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjn2gpK71NQ1BmPJbCrjRc-6ovhsDhoxo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "822789582232-jq0es7ofufip31gjt697tehlskj8iudj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
